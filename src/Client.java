@@ -29,6 +29,7 @@ public class Client {
 		
 		for(int i = 0; i < windowSize; i++) {
 			this.module[i] = new Module(this.percentage, new DatagramSocket(2000 + i), this.fileSize);
+			this.module[i].client = this;
 		}
 		
 		for(int i = 0; i < module.length; i++) {
