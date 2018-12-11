@@ -1,0 +1,4 @@
+portas:
+- Window: 1000~1999
+- Module: 2000~2999
+- Client: 3000
