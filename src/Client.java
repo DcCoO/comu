@@ -12,29 +12,34 @@ public class Client {
 	public int fileSize;
 	public int windowSize;
 	public Module[] module;
+	public int percentage;
 	
 	public Client(String fileName, int windowSize, int percentage) throws Exception {
 		this.fileName = fileName;
 		this.windowSize = windowSize;
 		this.module = new Module[windowSize];
-		for(int i = 0; i < windowSize; i++) {
-			this.module[i] = new Module(percentage, new DatagramSocket(2000 + i));
-		}
+		this.percentage = percentage;
 	}
 	
 	public void Receive() throws Exception {
 		
-			
+		
+		this.fileSize = GetFileSize();
+		System.out.println("CLIENTE: arquivo tem " + this.fileSize + " bytes");
+		
+		for(int i = 0; i < windowSize; i++) {
+			this.module[i] = new Module(this.percentage, new DatagramSocket(2000 + i), this.fileSize);
+		}
+		
 		for(int i = 0; i < module.length; i++) {
 			module[i].start();
 		}
 		
-		this.fileSize = GetFileSize();
-		System.out.println("CLIENTE: arquivo tem " + this.fileSize + " bytes");
+		
 	}
 	
 	public int GetFileSize() throws Exception {
-		DatagramSocket socket = new DatagramSocket(3000);
+		DatagramSocket socket = new DatagramSocket(Port.CLIENT);
 		byte[] ans = new byte[4];
 		DatagramPacket receivePacket = new DatagramPacket(ans, ans.length);
 		socket.receive(receivePacket);
@@ -44,7 +49,7 @@ public class Client {
 	
     public static void main(String[] args) throws Exception {
 		
-    	int windowSize = 5;
+    	int windowSize = 2;
     	
     	Client client = new Client("output.zip", windowSize, 100);
     	

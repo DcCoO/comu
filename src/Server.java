@@ -31,18 +31,20 @@ public class Server {
 		
 		FileInputStream fis = new FileInputStream(fileName);
 		byte[] buffer = new byte[100];
+		byte[] lastBuffer = new byte[ this.fileSize % 100 == 0 ? 100 : this.fileSize % 100];
 		
 		//criando sockets para cada janela
 		DatagramSocket[] sockets = new DatagramSocket[this.windowSize];
 		for(int i = 0; i < this.windowSize; i++) {
-			sockets[i] = new DatagramSocket(1000 + i);
+			sockets[i] = new DatagramSocket(Port.WINDOW + i);
 		}
 		
 		int index = 0;
 		int fileParts = this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1;
 		
 		for(int i = 0; i < this.windowSize; i++) {
-			if(fis.read(buffer) > 0) {
+			
+			if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
 				Window w = new Window();
 				w.Init(buffer, index++, sockets[i]);
 				w.start();
@@ -58,9 +60,11 @@ public class Server {
 			//TODO problema do ultimo packet nao necessariamente ter tamanho 100
 			//filesize mod 100
 			while(this.windows.peek().status == Status.FINISHED) {
-				Window w = this.windows.poll();
-				if(fis.read(buffer) > 0) {
+				Window aux = this.windows.poll();
+				Window w = aux.clone();
+				if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
 					w.Init(buffer, index++, w.socket);
+					//System.out.println("Window[" + w.socket.getLocalPort() + "]");
 					w.start();
 					this.windows.add(w);
 				}
@@ -72,10 +76,9 @@ public class Server {
 	}
 	
 	public void SendFileSize(int size) throws Exception {
-		int clientPort = 3000;	
 		InetAddress IPAddress = InetAddress.getByName("localhost");	
 		byte[] buf = ByteBuffer.allocate(Integer.BYTES).putInt(size).array();
-		DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, IPAddress, clientPort);
+		DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, IPAddress, Port.CLIENT);
 		DatagramSocket serverSocket = new DatagramSocket();
 		serverSocket.send(sendPacket);
 	}
@@ -84,7 +87,7 @@ public class Server {
 	
 	public static void main(String[] args) throws Exception {
 		
-		int windowSize = 5;		
+		int windowSize = 2;		
 		Server server = new Server("input.zip", windowSize);
 		
 		server.Send();

@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 public class Window extends Thread {
 	
 	public int index;
-	public Status status;
+	public volatile Status status;
 	byte[] data;
 	public DatagramSocket socket;
 	
@@ -28,42 +28,41 @@ public class Window extends Thread {
 		while(this.status == Status.RUNNING) {
 			try {
 				
-				this.socket.setSoTimeout(1000000);			
-				int modulePort = 1000 + this.socket.getLocalPort();	
+				this.socket.setSoTimeout(3000);			
+				int modulePort = Port.MODULE + (this.socket.getLocalPort() % 1000);	
 				InetAddress IPAddress = InetAddress.getByName("localhost");	
 				
 				//mandando index do packet
 				SendInt(this.index);
 				
-				byte[] receiveData = new byte[1024];
-		
+				sleep(1000);		
+				
 				//enviando dados para o modulo especial
+				System.out.println("Window[" + this.socket.getLocalPort() + "] enviando pacote " + index);
 				DatagramPacket sendPacket = new DatagramPacket(this.data, this.data.length, IPAddress, modulePort);
 				this.socket.send(sendPacket);
 		
-				//recebendo confirmacao de entrega
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				this.socket.receive(receivePacket);				
-		
-				String ack = new String(receivePacket.getData());
-		
-				System.out.println("Ack: " + ack);
+				sleep(1000);
 				
+				//recebendo ack de entrega
+				int ack = GetInt();		
+				System.out.println("Window[" + this.socket.getLocalPort() + "] recebeu ack: " + ack);
 				this.status = Status.FINISHED;				
 				
 			}
 			catch(Exception e) {
-				e.printStackTrace();
+				System.err.println("Window[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
 			}
 		}
 		
 	}
 	
 	public void SendInt(int x) throws Exception {
-		int modulePort = 1000 + this.socket.getLocalPort();	
+		int modulePort = Port.MODULE + (this.socket.getLocalPort() % 1000);	
 		InetAddress IPAddress = InetAddress.getByName("localhost");	
 		byte[] buf = ByteBuffer.allocate(Integer.BYTES).putInt(x).array();
 		DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, IPAddress, modulePort);
+		//System.out.println("Window[" + this.socket.getLocalPort() + "] enviando para Modulo[" + modulePort + "]");
 		this.socket.send(sendPacket);
 	}
 	
@@ -73,6 +72,12 @@ public class Window extends Thread {
 		this.socket.receive(receivePacket);
 		ByteBuffer wrapped = ByteBuffer.wrap(ans); // big-endian by default
 		return wrapped.getInt();
+	}
+	
+	public Window clone() {
+		Window w = new Window();
+		w.Init(this.data, this.index, this.socket);
+		return w;
 	}
 	
 }
