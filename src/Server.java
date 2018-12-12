@@ -16,6 +16,7 @@ public class Server {
 	public volatile Deque<Window> windows;
 	public int windowSize;
 	public volatile int index;
+	public Packet[] packets;
 	
 	public Server(String fileName, int windowSize) {
 		this.fileName = fileName;
@@ -23,16 +24,38 @@ public class Server {
 		this.fileSize = (int) f.length();
 		this.windows = new LinkedList<Window>();
 		this.windowSize = windowSize; this.index = 0;
+		this.packets = new Packet[this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1];
+	}
+	
+	
+	
+	public void Process() throws Exception {
+		byte[] buffer = new byte[100];
+		byte[] lastBuffer = new byte[ this.fileSize % 100 == 0 ? 100 : this.fileSize % 100];
+		
+		FileInputStream fis = new FileInputStream(this.fileName);
+		int p = 0;
+		while(true) {
+			int len = fis.read(buffer);
+			if(len != 100) {
+				for(int i = 0; i < len; i++) lastBuffer[i] = buffer[i];
+				this.packets[p] = new Packet(p, lastBuffer.clone());
+				fis.close();
+				break;
+			}
+			else this.packets[p] = new Packet(p, buffer.clone());
+			p++;
+		}
+		
+		//for(int i = 0; i < packets.length; i++) {
+		//	System.out.println(packets[i].data);
+		//}
 	}
 	
 	public void Send() throws Exception {
 		
 		SendFileSize(this.fileSize);
-		System.out.println("SERVIDOR: arquivo tem " + this.fileSize + " bytes");
-		
-		FileInputStream fis = new FileInputStream(fileName);
-		byte[] buffer = new byte[100];
-		byte[] lastBuffer = new byte[ this.fileSize % 100 == 0 ? 100 : this.fileSize % 100];
+		System.out.println("SERVIDOR: arquivo tem " + this.fileSize + " bytes divididos em " + this.packets.length + " partes");
 		
 		//criando sockets para cada janela
 		DatagramSocket[] sockets = new DatagramSocket[this.windowSize];
@@ -40,22 +63,18 @@ public class Server {
 			sockets[i] = new DatagramSocket(Port.WINDOW + i);
 		}
 		
-		int fileParts = this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1;
-		System.out.println("FILE PARTS = " + fileParts);
-		for(int i = 0; i < this.windowSize; i++) {
-			if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
-				Window w = new Window();
-				w.Init(buffer, index++, sockets[i]);
-				w.start();
-				this.windows.addLast(w);
-				Thread.sleep(1000);
-			}
-			else break;
+		for(int i = 0; i < Math.min(this.windowSize, this.packets.length); i++) {
+			
+			Window w = new Window();
+			w.Init(this.packets[i].data, i, sockets[i]);
+			w.start();
+			this.windows.addLast(w);
+			Thread.sleep(1000);
 		}
 		
+		index = Math.min(this.windowSize, this.packets.length);
 		
-		
-		while(index < fileParts - 1) {
+		while(index < this.packets.length - 1) {
 			
 			try {
 				System.out.println("Window[" + this.windows.getFirst().socket.getLocalPort() % 1000 +
@@ -71,18 +90,17 @@ public class Server {
 					//System.out.println("PACKET " + aux.index + " ENVIADO: " + aux.barr(aux.data));
 					
 					Window w = aux.clone();
-					if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
-						index = this.windows.getLast().index + 1;
-						w.Init(buffer, index, w.socket);
-						//System.out.println("Window[" + w.socket.getLocalPort() + "]");
-						w.start();
-						this.windows.addLast(w);
-						Thread.sleep(1000);
-					}
-					//else {
-					//	System.out.println("ACABOU EM " + index);
-					//	break;
-					//}
+					
+					if(index >= this.packets.length) continue;
+					
+					index = this.windows.getLast().index + 1;
+					
+					System.out.println("INDEX EH " + index);
+					
+					w.Init(this.packets[index].data, index, w.socket);
+					w.start();
+					this.windows.addLast(w);
+					Thread.sleep(1000);
 				}
 			
 			}
@@ -94,7 +112,6 @@ public class Server {
 		
 		System.out.println("SERVER: acabou!");
 		
-		fis.close();
 	}
 	
 	public void SendFileSize(int size) throws Exception {
@@ -110,6 +127,7 @@ public class Server {
 	public static void main(String[] args) throws Exception {
 		
 		Server server = new Server("input.txt", Config.WINDOW_SIZE);
+		server.Process();
 		server.Send();
 	}
 }

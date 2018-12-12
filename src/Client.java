@@ -42,7 +42,7 @@ public class Client {
 		//calcula numero de pacotes
 		this.arq = new byte[this.fileSize];
 		
-		System.out.println("CLIENTE: arquivo tem " + this.fileSize + " bytes");
+		System.out.println("CLIENTE: arquivo tem " + this.fileSize + " bytes divididos em " + this.fileParts + " partes");
 		
 		for(int i = 0; i < windowSize; i++) {
 			this.module[i] = new Module(this.percentage, new DatagramSocket(2000 + i), this.fileSize);

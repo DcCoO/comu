@@ -28,7 +28,9 @@ public class Module extends Thread {
 	public void run() {
 		while(true) {
 			
+			
 			try {
+				this.socket.setSoTimeout(10000);
 				
 				int index = GetInt();
 				
@@ -49,9 +51,9 @@ public class Module extends Thread {
 					
 					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
 					" em " + index + ", cliente em " + this.client.index + 
-					(this.client.index > index ? " [AGUARDA]" : "[ESCREVE]"));
+					(this.client.index != index ? " [AGUARDA]" : " [ESCREVE]"));
 					
-					while(this.client.index < index) {}
+					while(this.client.index != index) {}
 					
 					//synchronized (this.client) {
 						this.client.AddPacket(receiveData);
@@ -70,8 +72,9 @@ public class Module extends Thread {
 				}	
 			}
 			catch(Exception e) {
-				e.printStackTrace();
-				break;
+				System.err.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] " + e.getLocalizedMessage());
+				//e.printStackTrace();
+				//break;
 				//System.err.println("Module[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
 			}
 		}

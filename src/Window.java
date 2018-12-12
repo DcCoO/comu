@@ -52,7 +52,7 @@ public class Window extends Thread {
 				
 			}
 			catch(Exception e) {
-				System.err.println("Window[" + this.socket.getLocalPort() % 1000 + "] deu " + e.getLocalizedMessage());
+				System.err.println("Window[" + this.socket.getLocalPort() % 1000 + "] " + e.getLocalizedMessage());
 			}
 		}
 		
