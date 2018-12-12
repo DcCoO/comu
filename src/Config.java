@@ -1,5 +1,5 @@
 
 public class Config {
-	public static int WINDOW_SIZE = 8;
-	public static int PERCENTAGE = 100;
+	public static int WINDOW_SIZE = 10;
+	public static int PERCENTAGE = 60;
 }
