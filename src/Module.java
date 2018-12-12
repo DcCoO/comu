@@ -28,41 +28,37 @@ public class Module extends Thread {
 	public void run() {
 		while(true) {
 			
-			
 			try {
 				
-				System.out.println("Modulo[" + this.socket.getLocalPort() + "] aguardando index");	
-				
-				//le index do packet da Window
 				int index = GetInt();
-				System.out.println("Modulo[" + this.socket.getLocalPort() + "] recebendo index " + index);
 				
 				Random r = new Random();		
 		
-				//TODO decidir tamanho do ultimo packet pelo index e client.fileSize
 				byte[] receiveData = new byte[index == this.lastIndex? this.lastSize : 100];		
 					
 				//recebe um packet do servidor
+				//System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] esperando pacote " + index);
 				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				this.socket.receive(receivePacket);
 				
-				System.out.println("Modulo[" + this.socket.getLocalPort() + "] recebeu pacote " + index);
+				//System.out.println("Modulo[" + this.socket.getLocalPort() + "] recebeu pacote " + index);
 				
 				int random = r.nextInt(101);
 				
 				if(random < this.percentage) {
 					
-					//TODO receivePacket no cliente
-				
-					//enviando ack para janela
-					SendInt(index);
+					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] esperando inserir " + index);
+					while(this.client.index < index) {}
+					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] inseriu " + index);
 					
+					this.client.AddPacket(receiveData);
+					
+					SendInt(index);					
 				}	
-				sleep(1000);
-					
 			}
 			catch(Exception e) {
-				System.err.println("Module[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
+				e.printStackTrace();
+				//System.err.println("Module[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
 			}
 		}
 	}

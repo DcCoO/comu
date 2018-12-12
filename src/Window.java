@@ -3,6 +3,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class Window extends Thread {
 	
@@ -28,25 +29,25 @@ public class Window extends Thread {
 		while(this.status == Status.RUNNING) {
 			try {
 				
-				this.socket.setSoTimeout(3000);			
+				//this.socket.setSoTimeout(5000);			
 				int modulePort = Port.MODULE + (this.socket.getLocalPort() % 1000);	
 				InetAddress IPAddress = InetAddress.getByName("localhost");	
 				
 				//mandando index do packet
 				SendInt(this.index);
 				
-				sleep(1000);		
+				//sleep(1000);		
 				
 				//enviando dados para o modulo especial
-				System.out.println("Window[" + this.socket.getLocalPort() + "] enviando pacote " + index);
+				//System.out.println("Window[" + this.socket.getLocalPort() + "," + index + "] = " + barr(this.data));
 				DatagramPacket sendPacket = new DatagramPacket(this.data, this.data.length, IPAddress, modulePort);
 				this.socket.send(sendPacket);
 		
-				sleep(1000);
+				//sleep(1000);
 				
 				//recebendo ack de entrega
 				int ack = GetInt();		
-				System.out.println("Window[" + this.socket.getLocalPort() + "] recebeu ack: " + ack);
+				System.out.println("Window[" + this.socket.getLocalPort() + "," + index + "] recebeu ack: " + ack);
 				this.status = Status.FINISHED;				
 				
 			}
@@ -55,6 +56,10 @@ public class Window extends Thread {
 			}
 		}
 		
+	}
+	
+	public String barr(byte[] array) {
+		return Arrays.toString(array);
 	}
 	
 	public void SendInt(int x) throws Exception {

@@ -41,9 +41,8 @@ public class Server {
 		
 		int index = 0;
 		int fileParts = this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1;
-		
+		System.out.println("FILE PARTS = " + fileParts);
 		for(int i = 0; i < this.windowSize; i++) {
-			
 			if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
 				Window w = new Window();
 				w.Init(buffer, index++, sockets[i]);
@@ -55,12 +54,13 @@ public class Server {
 		
 		while(index < fileParts) {
 			while(this.windows.peek().status == Status.RUNNING) {}
-			System.out.println("Index " + this.windows.peek().index + " enviado!");
+			//System.out.println("Index " + this.windows.peek().index + " enviado!");
 			
-			//TODO problema do ultimo packet nao necessariamente ter tamanho 100
-			//filesize mod 100
 			while(this.windows.peek().status == Status.FINISHED) {
 				Window aux = this.windows.poll();
+				
+				//System.out.println("PACKET " + aux.index + " ENVIADO: " + aux.barr(aux.data));
+				
 				Window w = aux.clone();
 				if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
 					w.Init(buffer, index++, w.socket);
@@ -68,7 +68,10 @@ public class Server {
 					w.start();
 					this.windows.add(w);
 				}
-				else break;
+				else {
+					System.out.println("ACABOU EM " + index);
+					break;
+				}
 			}
 		}
 		
@@ -85,13 +88,9 @@ public class Server {
 	
 	
 	
-	public static void main(String[] args) throws Exception {
-		
-		int windowSize = 2;		
-		Server server = new Server("input.zip", windowSize);
-		
+	public static void main(String[] args) throws Exception {	
+		int windowSize = 8;		
+		Server server = new Server("input.txt", windowSize);
 		server.Send();
-		
-		
 	}
 }
