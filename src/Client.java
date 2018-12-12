@@ -18,6 +18,8 @@ public class Client {
 	public volatile int index;
 	public File file;
 	public FileOutputStream os; 
+	public int writtenPackets;
+	public int fileParts;
 	
 	public Client(String fileName, int windowSize, int percentage) throws Exception {
 		this.fileName = fileName;
@@ -27,11 +29,15 @@ public class Client {
 		this.index = 0;
 		this.file = new File(this.fileName);
 		this.os = new FileOutputStream(file); 
+		this.writtenPackets = 0;
+		this.fileParts = 0;
 	}
 	
 	public void Receive() throws Exception {
 		
 		this.fileSize = GetFileSize();
+		
+		this.fileParts = this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1;
 		
 		//calcula numero de pacotes
 		this.arq = new byte[this.fileSize];
@@ -49,38 +55,27 @@ public class Client {
 		
 	}
 	
+	int soma = 0;
+	
 	
 	public void AddPacket(byte[] packet) {
 		try {   
-            //os.write(packet, 100 * this.index - 1, packet.length);
-            os.write(packet);
-            //this.index++;
-            if(this.index == 51) {
-            	System.out.println("ACABOU O WRITE");
+            System.out.println("escrevendo parte " + index + " com " + packet.length + " bytes");
+            soma += packet.length; 
+            this.os.write(packet);
+            this.writtenPackets++;
+            if(this.writtenPackets == this.fileParts) {
+            	System.out.println("ACABOU O WRITE, SOMA DEU " + soma + " BYTES");
             	os.close();
+            	//for(int i = 0; i < this.module.length; i++) {
+            	//	this.module[i].interrupt();
+            	//}
             }
         }   
         catch (Exception e) { 
             System.out.println("Exception: " + e); 
         } 
 	}
-	
-	/*
-    public void WriteFile(byte[] bytes) { 
-        try { 
-        	File file = new File(this.fileName);
-            OutputStream os = new FileOutputStream(file); 
-  
-            os.write(bytes); 
-            System.out.println("Successfully" + " byte inserted"); 
-  
-            os.close(); 
-        } 
-  
-        catch (Exception e) { 
-            System.out.println("Exception: " + e); 
-        } 
-    }*/
 	
 	public int GetFileSize() throws Exception {
 		DatagramSocket socket = new DatagramSocket(Port.CLIENT);
@@ -91,16 +86,10 @@ public class Client {
 		return wrapped.getInt();
 	}
 	
-	//public boolean TransferOver() {
-	//	for(int i = 0; i < this.packets.length; i++) if(!this.packets[i]) return false;
-	//	return true;
-	//}
 	
     public static void main(String[] args) throws Exception {
 		
-    	int windowSize = 8;
-    	
-    	Client client = new Client("output.txt", windowSize, 100);
+    	Client client = new Client("output.txt", Config.WINDOW_SIZE, Config.PERCENTAGE);
     	
     	client.Receive();
 		

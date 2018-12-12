@@ -29,7 +29,7 @@ public class Window extends Thread {
 		while(this.status == Status.RUNNING) {
 			try {
 				
-				//this.socket.setSoTimeout(5000);			
+				this.socket.setSoTimeout(5000);			
 				int modulePort = Port.MODULE + (this.socket.getLocalPort() % 1000);	
 				InetAddress IPAddress = InetAddress.getByName("localhost");	
 				
@@ -52,7 +52,7 @@ public class Window extends Thread {
 				
 			}
 			catch(Exception e) {
-				System.err.println("Window[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
+				System.err.println("Window[" + this.socket.getLocalPort() % 1000 + "] deu " + e.getLocalizedMessage());
 			}
 		}
 		

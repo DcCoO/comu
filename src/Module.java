@@ -48,22 +48,30 @@ public class Module extends Thread {
 				if(random < this.percentage) {
 					
 					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
-					" em " + index + ", cliente em " + this.client.index);
+					" em " + index + ", cliente em " + this.client.index + 
+					(this.client.index > index ? " [AGUARDA]" : "[ESCREVE]"));
+					
 					while(this.client.index < index) {}
 					
-					this.client.AddPacket(receiveData);
+					//synchronized (this.client) {
+						this.client.AddPacket(receiveData);
+						
+						sleep(500);
+						
+						SendInt(index);	
+						
+						System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
+								" enviou " + index + ", cliente em " + (this.client.index + 1));
+						this.client.index++;
+						
+					//}
 					
-					sleep(500);
 					
-					SendInt(index);	
-					
-					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
-							" enviou " + index + ", cliente em " + (this.client.index + 1));
-					this.client.index++;
 				}	
 			}
 			catch(Exception e) {
 				e.printStackTrace();
+				break;
 				//System.err.println("Module[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
 			}
 		}

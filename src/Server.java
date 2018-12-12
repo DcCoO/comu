@@ -48,9 +48,12 @@ public class Server {
 				w.Init(buffer, index++, sockets[i]);
 				w.start();
 				this.windows.addLast(w);
+				Thread.sleep(1000);
 			}
 			else break;
 		}
+		
+		
 		
 		while(index < fileParts - 1) {
 			
@@ -74,6 +77,7 @@ public class Server {
 						//System.out.println("Window[" + w.socket.getLocalPort() + "]");
 						w.start();
 						this.windows.addLast(w);
+						Thread.sleep(1000);
 					}
 					//else {
 					//	System.out.println("ACABOU EM " + index);
@@ -103,9 +107,9 @@ public class Server {
 	
 	
 	
-	public static void main(String[] args) throws Exception {	
-		int windowSize = 8;		
-		Server server = new Server("input.txt", windowSize);
+	public static void main(String[] args) throws Exception {
+		
+		Server server = new Server("input.txt", Config.WINDOW_SIZE);
 		server.Send();
 	}
 }
