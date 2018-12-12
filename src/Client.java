@@ -1,10 +1,7 @@
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 
 public class Client {
@@ -82,6 +79,7 @@ public class Client {
 		DatagramPacket receivePacket = new DatagramPacket(ans, ans.length);
 		socket.receive(receivePacket);
 		ByteBuffer wrapped = ByteBuffer.wrap(ans);
+		socket.close();
 		return wrapped.getInt();
 	}
 

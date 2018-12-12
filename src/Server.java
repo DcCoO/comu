@@ -1,14 +1,11 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.concurrent.atomic.AtomicInteger;
+//import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Deque;
 
 public class Server {
@@ -16,7 +13,7 @@ public class Server {
 	public int fileSize;
 	public volatile Deque<Window> windows;
 	public int windowSize;
-	public AtomicInteger index;
+	public int index;
 	public Packet[] packets;
 
 	public Server(String fileName, int windowSize) {
@@ -25,7 +22,7 @@ public class Server {
 		this.fileSize = (int) f.length();
 		this.windows = new LinkedList<Window>();
 		this.windowSize = windowSize;
-		this.index = new AtomicInteger(0);
+		this.index = 0;
 		this.packets = new Packet[this.fileSize % 100 == 0 ? (this.fileSize / 100) : (this.fileSize / 100) + 1];
 	}
 
@@ -70,9 +67,9 @@ public class Server {
 			Thread.sleep(1000);
 		}
 
-		index.set(Math.min(this.windowSize, this.packets.length));
+		this.index = Math.min(this.windowSize, this.packets.length);
 
-		while (this.index.get() < this.packets.length) {
+		while (this.index < this.packets.length) {
 
 			try {
 				System.out.println("SERVER: " + this.windows.getFirst().me() + "esperando inserir "
@@ -86,24 +83,22 @@ public class Server {
 
 					Window w = aux.clone();
 
-					if (index.get() >= this.packets.length)
+					if (this.index >= this.packets.length)
 						continue;
 
-					synchronized (index) {
-						if (this.windows.size() == 0)
-							index.set(aux.index + 1);
-						else
-							index.set(this.windows.getLast().index + 1);
+					
+					if (this.windows.size() == 0) this.index = aux.index + 1;
+					else this.index = this.windows.getLast().index + 1;
 
-						if (index.get() >= this.packets.length)
-							continue;
+					if (this.index >= this.packets.length)
+						continue;
 
-						w.Init(this.packets[index.get()].data, index.get(), w.socket);
-						w.start();
+					w.Init(this.packets[this.index].data, this.index, w.socket);
+					w.start();
 
-						this.windows.addLast(w);
+					this.windows.addLast(w);
 
-					}
+					
 				}
 				if (this.windows.size() > 0) {
 					this.windows.getFirst().isTarget = true;
@@ -123,8 +118,9 @@ public class Server {
 		InetAddress IPAddress = InetAddress.getByName("localhost");
 		byte[] buf = ByteBuffer.allocate(Integer.BYTES).putInt(size).array();
 		DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, IPAddress, Port.CLIENT);
-		DatagramSocket serverSocket = new DatagramSocket();
+		DatagramSocket serverSocket = new DatagramSocket(Port.SERVER);
 		serverSocket.send(sendPacket);
+		serverSocket.close();
 	}
 
 	public static void main(String[] args) throws Exception {
