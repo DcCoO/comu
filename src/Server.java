@@ -8,20 +8,21 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Deque;
 
 public class Server {
 	public String fileName;
 	public int fileSize;
-	public Queue<Window> windows;
+	public volatile Deque<Window> windows;
 	public int windowSize;
+	public volatile int index;
 	
 	public Server(String fileName, int windowSize) {
 		this.fileName = fileName;
 		File f = new File(fileName);
 		this.fileSize = (int) f.length();
 		this.windows = new LinkedList<Window>();
-		this.windowSize = windowSize;
+		this.windowSize = windowSize; this.index = 0;
 	}
 	
 	public void Send() throws Exception {
@@ -39,7 +40,6 @@ public class Server {
 			sockets[i] = new DatagramSocket(Port.WINDOW + i);
 		}
 		
-		int index = 0;
 		int fileParts = this.fileSize % 100 == 0? (this.fileSize / 100) : (this.fileSize / 100) + 1;
 		System.out.println("FILE PARTS = " + fileParts);
 		for(int i = 0; i < this.windowSize; i++) {
@@ -47,33 +47,48 @@ public class Server {
 				Window w = new Window();
 				w.Init(buffer, index++, sockets[i]);
 				w.start();
-				this.windows.add(w);
+				this.windows.addLast(w);
 			}
 			else break;
 		}
 		
-		while(index < fileParts) {
-			while(this.windows.peek().status == Status.RUNNING) {}
-			//System.out.println("Index " + this.windows.peek().index + " enviado!");
+		while(index < fileParts - 1) {
 			
-			while(this.windows.peek().status == Status.FINISHED) {
-				Window aux = this.windows.poll();
+			try {
+				System.out.println("Window[" + this.windows.getFirst().socket.getLocalPort() % 1000 +
+						"] esperando inserir " + this.windows.getFirst().index);
 				
-				//System.out.println("PACKET " + aux.index + " ENVIADO: " + aux.barr(aux.data));
+				while(this.windows.getFirst().status == Status.RUNNING) {}
+				//System.out.println("Index " + this.windows.peek().index + " enviado!");
 				
-				Window w = aux.clone();
-				if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
-					w.Init(buffer, index++, w.socket);
-					//System.out.println("Window[" + w.socket.getLocalPort() + "]");
-					w.start();
-					this.windows.add(w);
+				while(this.windows.getFirst().status == Status.FINISHED) {
+					Window aux = this.windows.poll();
+					System.out.println("Window[" + aux.socket.getLocalPort() % 1000 + "] recebeu " + aux.index);
+					
+					//System.out.println("PACKET " + aux.index + " ENVIADO: " + aux.barr(aux.data));
+					
+					Window w = aux.clone();
+					if(fis.read(index < fileParts - 1? buffer : lastBuffer) > 0) {
+						index = this.windows.getLast().index + 1;
+						w.Init(buffer, index, w.socket);
+						//System.out.println("Window[" + w.socket.getLocalPort() + "]");
+						w.start();
+						this.windows.addLast(w);
+					}
+					//else {
+					//	System.out.println("ACABOU EM " + index);
+					//	break;
+					//}
 				}
-				else {
-					System.out.println("ACABOU EM " + index);
-					break;
-				}
+			
+			}
+			catch(Exception e) {
+				System.out.println("INDEX = " + index);
+				break;
 			}
 		}
+		
+		System.out.println("SERVER: acabou!");
 		
 		fis.close();
 	}

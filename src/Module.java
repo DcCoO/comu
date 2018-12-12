@@ -47,13 +47,19 @@ public class Module extends Thread {
 				
 				if(random < this.percentage) {
 					
-					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] esperando inserir " + index);
+					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
+					" em " + index + ", cliente em " + this.client.index);
 					while(this.client.index < index) {}
-					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "] inseriu " + index);
 					
 					this.client.AddPacket(receiveData);
 					
-					SendInt(index);					
+					sleep(500);
+					
+					SendInt(index);	
+					
+					System.out.println("Modulo[" + this.socket.getLocalPort() % 1000 + "]" +
+							" enviou " + index + ", cliente em " + (this.client.index + 1));
+					this.client.index++;
 				}	
 			}
 			catch(Exception e) {

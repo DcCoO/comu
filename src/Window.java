@@ -36,18 +36,18 @@ public class Window extends Thread {
 				//mandando index do packet
 				SendInt(this.index);
 				
-				//sleep(1000);		
+				sleep(500);		
 				
 				//enviando dados para o modulo especial
 				//System.out.println("Window[" + this.socket.getLocalPort() + "," + index + "] = " + barr(this.data));
 				DatagramPacket sendPacket = new DatagramPacket(this.data, this.data.length, IPAddress, modulePort);
 				this.socket.send(sendPacket);
-		
+				
 				//sleep(1000);
 				
 				//recebendo ack de entrega
 				int ack = GetInt();		
-				System.out.println("Window[" + this.socket.getLocalPort() + "," + index + "] recebeu ack: " + ack);
+				//System.out.println("Window[" + this.socket.getLocalPort() + "," + index + "] recebeu ack: " + ack);
 				this.status = Status.FINISHED;				
 				
 			}
@@ -55,6 +55,7 @@ public class Window extends Thread {
 				System.err.println("Window[" + this.socket.getLocalPort() + "] deu " + e.getLocalizedMessage());
 			}
 		}
+		
 		
 	}
 	

@@ -47,10 +47,6 @@ public class Client {
 			module[i].start();
 		}
 		
-		//while(!TransferOver()) {}
-		
-		//WriteFile(this.arq);
-		
 	}
 	
 	
@@ -58,8 +54,8 @@ public class Client {
 		try {   
             //os.write(packet, 100 * this.index - 1, packet.length);
             os.write(packet);
-            this.index++;
-            if(this.index == 33) {
+            //this.index++;
+            if(this.index == 51) {
             	System.out.println("ACABOU O WRITE");
             	os.close();
             }
