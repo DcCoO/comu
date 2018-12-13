@@ -123,10 +123,4 @@ public class Server {
 		serverSocket.close();
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		Server server = new Server("input.zip", Config.WINDOW_SIZE);
-		server.Process();
-		server.Send();
-	}
 }

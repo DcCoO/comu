@@ -83,12 +83,4 @@ public class Client {
 		return wrapped.getInt();
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		Client client = new Client("output.zip", Config.WINDOW_SIZE, Config.PERCENTAGE);
-
-		client.Receive();
-
-	}
-
 }
